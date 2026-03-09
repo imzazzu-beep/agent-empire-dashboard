@@ -1,7 +1,38 @@
 import Link from 'next/link';
 import { Bot, Users, CheckSquare, Calendar, Activity, Clock, Zap } from 'lucide-react';
+import { supabaseAdmin } from '@/lib/supabase';
 
-export default function Dashboard() {
+async function getDashboardStats() {
+  // Get agent stats
+  const { data: agents } = await supabaseAdmin.from('agents').select('status');
+  
+  // Get task stats  
+  const { data: tasks } = await supabaseAdmin.from('tasks').select('status, completed_at');
+  
+  // Get department stats
+  const { data: departments } = await supabaseAdmin.from('departments').select('id');
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  return {
+    totalAgents: agents?.length || 0,
+    activeAgents: agents?.filter(a => a.status === 'active').length || 0,
+    pendingTasks: tasks?.filter(t => t.status === 'pending' || t.status === 'in_progress').length || 0,
+    completedToday: tasks?.filter(t => {
+      if (!t.completed_at) return false;
+      const completedDate = new Date(t.completed_at);
+      return completedDate >= today;
+    }).length || 0,
+    departments: departments?.length || 0,
+  };
+}
+
+export const dynamic = 'force-dynamic';
+
+export default async function Dashboard() {
+  const stats = await getDashboardStats();
+  
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Top Bar */}
@@ -29,37 +60,37 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <MetricCard
             label="Total Agents"
-            value="0"
-            change="+0"
+            value={stats.totalAgents.toString()}
+            change={stats.totalAgents > 0 ? `+${stats.totalAgents}` : '0'}
             icon={<Bot className="w-5 h-5" />}
             color="blue"
           />
           <MetricCard
             label="Active Now"
-            value="0"
-            change="+0"
+            value={stats.activeAgents.toString()}
+            change={stats.activeAgents > 0 ? '●' : '○'}
             icon={<Activity className="w-5 h-5" />}
             color="green"
           />
           <MetricCard
             label="Pending Tasks"
-            value="0"
+            value={stats.pendingTasks.toString()}
             change="+0"
             icon={<CheckSquare className="w-5 h-5" />}
             color="yellow"
           />
           <MetricCard
             label="Done Today"
-            value="0"
+            value={stats.completedToday.toString()}
             change="+0"
             icon={<Zap className="w-5 h-5" />}
             color="purple"
           />
           <MetricCard
-            label="Meetings"
-            value="0"
+            label="Departments"
+            value={stats.departments.toString()}
             change="+0"
-            icon={<Calendar className="w-5 h-5" />}
+            icon={<Users className="w-5 h-5" />}
             color="orange"
           />
         </div>
@@ -74,7 +105,7 @@ export default function Dashboard() {
                 </div>
                 <h3 className="text-lg font-semibold">Agents</h3>
               </div>
-              <p className="text-sm text-slate-400">Manage your AI workforce</p>
+              <p className="text-sm text-slate-400">Manage your AI workforce · {stats.totalAgents} active</p>
             </div>
           </Link>
 
@@ -86,7 +117,7 @@ export default function Dashboard() {
                 </div>
                 <h3 className="text-lg font-semibold">Tasks</h3>
               </div>
-              <p className="text-sm text-slate-400">Track and assign work</p>
+              <p className="text-sm text-slate-400">Track and assign work · {stats.pendingTasks} pending</p>
             </div>
           </Link>
 
@@ -107,16 +138,26 @@ export default function Dashboard() {
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
           <div className="space-y-3">
-            <div className="text-center py-8 text-slate-500">
-              <Bot className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No activity yet. Create your first agent to get started.</p>
-              <Link
-                href="/agents/new"
-                className="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-              >
-                Create First Agent
-              </Link>
-            </div>
+            {stats.totalAgents === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                <Bot className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No activity yet. Create your first agent to get started.</p>
+                <Link
+                  href="/agents/new"
+                  className="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                >
+                  Create First Agent
+                </Link>
+              </div>
+            ) : (
+              <div className="text-sm text-slate-400 space-y-2">
+                <div className="flex items-center gap-3 py-2">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                  <span>System initialized with {stats.totalAgents} agent{stats.totalAgents !== 1 ? 's' : ''}</span>
+                  <span className="text-slate-600 ml-auto">Just now</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,158 +1,206 @@
-import Link from 'next/link';
-import { Bot, Users, CheckSquare, Calendar, FileText, Settings, Activity } from 'lucide-react';
+'use client';
 
-export default function Home() {
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
+import { Bot, Users, CheckSquare, Calendar, Activity, Clock, Zap } from 'lucide-react';
+
+interface DashboardStats {
+  totalAgents: number;
+  activeAgents: number;
+  pendingTasks: number;
+  completedToday: number;
+  upcomingMeetings: number;
+}
+
+export default function Dashboard() {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalAgents: 0,
+    activeAgents: 0,
+    pendingTasks: 0,
+    completedToday: 0,
+    upcomingMeetings: 0,
+  });
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  async function loadStats() {
+    // Load agent stats
+    const { data: agents } = await supabase.from('agents').select('status');
+    
+    // Load task stats
+    const { data: tasks } = await supabase.from('tasks').select('status');
+    
+    setStats({
+      totalAgents: agents?.length || 0,
+      activeAgents: agents?.filter(a => a.status === 'active').length || 0,
+      pendingTasks: tasks?.filter(t => t.status === 'pending' || t.status === 'in_progress').length || 0,
+      completedToday: tasks?.filter(t => t.status === 'completed').length || 0,
+      upcomingMeetings: 0,
+    });
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen bg-slate-950 text-white">
+      {/* Top Bar */}
+      <div className="border-b border-slate-800 bg-slate-900/50">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Activity className="w-8 h-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Agent Empire</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <h1 className="text-xl font-bold">Agent Empire OS</h1>
+              <span className="text-xs text-slate-500 ml-2">v1.0.0</span>
             </div>
-            <nav className="flex gap-6">
-              <Link href="/agents" className="text-gray-600 hover:text-gray-900">Agents</Link>
-              <Link href="/tasks" className="text-gray-600 hover:text-gray-900">Tasks</Link>
-              <Link href="/meetings" className="text-gray-600 hover:text-gray-900">Meetings</Link>
-              <Link href="/settings" className="text-gray-600 hover:text-gray-900">Settings</Link>
-            </nav>
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2 text-slate-400">
+                <Clock className="w-4 h-4" />
+                {new Date().toLocaleTimeString()}
+              </div>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Hero Section */}
-      <section className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h2 className="text-5xl font-bold text-gray-900 mb-4">
-            Your Own AI Team
-            <br />
-            <span className="text-blue-600">Without the Headache</span>
-          </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Build and manage your AI agent workforce. Create agents, assign tasks, and scale your business operations.
-          </p>
-          <Link
-            href="/agents/new"
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
-          >
-            Create Your First Agent
+      {/* Main Content */}
+      <div className="container mx-auto px-6 py-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <MetricCard
+            label="Total Agents"
+            value={stats.totalAgents.toString()}
+            change="+0"
+            icon={<Bot className="w-5 h-5" />}
+            color="blue"
+          />
+          <MetricCard
+            label="Active Now"
+            value={stats.activeAgents.toString()}
+            change="+0"
+            icon={<Activity className="w-5 h-5" />}
+            color="green"
+          />
+          <MetricCard
+            label="Pending Tasks"
+            value={stats.pendingTasks.toString()}
+            change="+0"
+            icon={<CheckSquare className="w-5 h-5" />}
+            color="yellow"
+          />
+          <MetricCard
+            label="Done Today"
+            value={stats.completedToday.toString()}
+            change="+0"
+            icon={<Zap className="w-5 h-5" />}
+            color="purple"
+          />
+          <MetricCard
+            label="Meetings"
+            value={stats.upcomingMeetings.toString()}
+            change="+0"
+            icon={<Calendar className="w-5 h-5" />}
+            color="orange"
+          />
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Link href="/agents">
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-blue-500/50 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
+                  <Bot className="w-6 h-6 text-blue-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Agents</h3>
+              </div>
+              <p className="text-sm text-slate-400">Manage your AI workforce</p>
+            </div>
+          </Link>
+
+          <Link href="/tasks">
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-green-500/50 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-green-500/10 rounded-lg group-hover:bg-green-500/20 transition-colors">
+                  <CheckSquare className="w-6 h-6 text-green-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Tasks</h3>
+              </div>
+              <p className="text-sm text-slate-400">Track and assign work</p>
+            </div>
+          </Link>
+
+          <Link href="/meetings">
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-purple-500/50 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors">
+                  <Calendar className="w-6 h-6 text-purple-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Meetings</h3>
+              </div>
+              <p className="text-sm text-slate-400">Schedule and review</p>
+            </div>
           </Link>
         </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <StatCard
-            icon={<Bot className="w-6 h-6 text-blue-600" />}
-            label="Total Agents"
-            value="0"
-          />
-          <StatCard
-            icon={<CheckSquare className="w-6 h-6 text-green-600" />}
-            label="Active Tasks"
-            value="0"
-          />
-          <StatCard
-            icon={<Users className="w-6 h-6 text-purple-600" />}
-            label="Departments"
-            value="1"
-          />
+        {/* Recent Activity */}
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+          <div className="space-y-3">
+            {stats.totalAgents === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                <Bot className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No activity yet. Create your first agent to get started.</p>
+                <Link
+                  href="/agents/new"
+                  className="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                >
+                  Create First Agent
+                </Link>
+              </div>
+            ) : (
+              <p className="text-slate-500 text-sm">Activity log will appear here</p>
+            )}
+          </div>
         </div>
-
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <FeatureCard
-            icon={<Bot className="w-8 h-8 text-blue-600" />}
-            title="Agents"
-            description="Create and manage AI agents with different roles and capabilities"
-            href="/agents"
-          />
-          <FeatureCard
-            icon={<CheckSquare className="w-8 h-8 text-green-600" />}
-            title="Tasks"
-            description="Assign work, track progress, and manage priorities"
-            href="/tasks"
-          />
-          <FeatureCard
-            icon={<Calendar className="w-8 h-8 text-purple-600" />}
-            title="Meetings"
-            description="Schedule agent meetings and review transcripts"
-            href="/meetings"
-          />
-          <FeatureCard
-            icon={<Users className="w-8 h-8 text-orange-600" />}
-            title="Departments"
-            description="Organize agents into teams and departments"
-            href="/departments"
-          />
-          <FeatureCard
-            icon={<FileText className="w-8 h-8 text-red-600" />}
-            title="Files"
-            description="Edit agent personalities and knowledge bases"
-            href="/files"
-          />
-          <FeatureCard
-            icon={<Settings className="w-8 h-8 text-gray-600" />}
-            title="Settings"
-            description="Configure system settings and integrations"
-            href="/settings"
-          />
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
-        <div className="container mx-auto px-4 py-8 text-center text-gray-600">
-          <p>Agent Empire Dashboard · Built with OpenClaw</p>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }
 
-function StatCard({
-  icon,
+function MetricCard({
   label,
   value,
+  change,
+  icon,
+  color,
 }: {
-  icon: React.ReactNode;
   label: string;
   value: string;
-}) {
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="flex items-center gap-3 mb-2">
-        {icon}
-        <span className="text-sm font-medium text-gray-600">{label}</span>
-      </div>
-      <p className="text-3xl font-bold text-gray-900">{value}</p>
-    </div>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  description,
-  href,
-}: {
+  change: string;
   icon: React.ReactNode;
-  title: string;
-  description: string;
-  href: string;
+  color: string;
 }) {
+  const colors = {
+    blue: 'text-blue-400 bg-blue-500/10',
+    green: 'text-green-400 bg-green-500/10',
+    yellow: 'text-yellow-400 bg-yellow-500/10',
+    purple: 'text-purple-400 bg-purple-500/10',
+    orange: 'text-orange-400 bg-orange-500/10',
+  };
+
   return (
-    <Link href={href}>
-      <div className="bg-white rounded-lg border border-gray-200 p-6 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group">
-        <div className="mb-4 group-hover:scale-110 transition-transform inline-block">
+    <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-slate-500 uppercase font-medium">{label}</span>
+        <div className={`p-1.5 rounded ${colors[color as keyof typeof colors]}`}>
           {icon}
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-gray-600 text-sm">{description}</p>
       </div>
-    </Link>
+      <div className="flex items-baseline gap-2">
+        <span className="text-2xl font-bold">{value}</span>
+        <span className="text-xs text-slate-500">{change}</span>
+      </div>
+    </div>
   );
 }

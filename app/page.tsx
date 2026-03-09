@@ -1,47 +1,7 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { Bot, Users, CheckSquare, Calendar, Activity, Clock, Zap } from 'lucide-react';
 
-interface DashboardStats {
-  totalAgents: number;
-  activeAgents: number;
-  pendingTasks: number;
-  completedToday: number;
-  upcomingMeetings: number;
-}
-
 export default function Dashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalAgents: 0,
-    activeAgents: 0,
-    pendingTasks: 0,
-    completedToday: 0,
-    upcomingMeetings: 0,
-  });
-
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  async function loadStats() {
-    // Load agent stats
-    const { data: agents } = await supabase.from('agents').select('status');
-    
-    // Load task stats
-    const { data: tasks } = await supabase.from('tasks').select('status');
-    
-    setStats({
-      totalAgents: agents?.length || 0,
-      activeAgents: agents?.filter(a => a.status === 'active').length || 0,
-      pendingTasks: tasks?.filter(t => t.status === 'pending' || t.status === 'in_progress').length || 0,
-      completedToday: tasks?.filter(t => t.status === 'completed').length || 0,
-      upcomingMeetings: 0,
-    });
-  }
-
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Top Bar */}
@@ -56,7 +16,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-6 text-sm">
               <div className="flex items-center gap-2 text-slate-400">
                 <Clock className="w-4 h-4" />
-                {new Date().toLocaleTimeString()}
+                <span suppressHydrationWarning>{new Date().toLocaleTimeString()}</span>
               </div>
             </div>
           </div>
@@ -69,35 +29,35 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <MetricCard
             label="Total Agents"
-            value={stats.totalAgents.toString()}
+            value="0"
             change="+0"
             icon={<Bot className="w-5 h-5" />}
             color="blue"
           />
           <MetricCard
             label="Active Now"
-            value={stats.activeAgents.toString()}
+            value="0"
             change="+0"
             icon={<Activity className="w-5 h-5" />}
             color="green"
           />
           <MetricCard
             label="Pending Tasks"
-            value={stats.pendingTasks.toString()}
+            value="0"
             change="+0"
             icon={<CheckSquare className="w-5 h-5" />}
             color="yellow"
           />
           <MetricCard
             label="Done Today"
-            value={stats.completedToday.toString()}
+            value="0"
             change="+0"
             icon={<Zap className="w-5 h-5" />}
             color="purple"
           />
           <MetricCard
             label="Meetings"
-            value={stats.upcomingMeetings.toString()}
+            value="0"
             change="+0"
             icon={<Calendar className="w-5 h-5" />}
             color="orange"
@@ -147,20 +107,16 @@ export default function Dashboard() {
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
           <div className="space-y-3">
-            {stats.totalAgents === 0 ? (
-              <div className="text-center py-8 text-slate-500">
-                <Bot className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No activity yet. Create your first agent to get started.</p>
-                <Link
-                  href="/agents/new"
-                  className="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-                >
-                  Create First Agent
-                </Link>
-              </div>
-            ) : (
-              <p className="text-slate-500 text-sm">Activity log will appear here</p>
-            )}
+            <div className="text-center py-8 text-slate-500">
+              <Bot className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No activity yet. Create your first agent to get started.</p>
+              <Link
+                href="/agents/new"
+                className="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+              >
+                Create First Agent
+              </Link>
+            </div>
           </div>
         </div>
       </div>

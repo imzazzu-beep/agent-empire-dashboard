@@ -1,15 +1,10 @@
-import Link from 'next/link';
-import { Bot, Users, CheckSquare, Calendar, Activity, Clock, Zap } from 'lucide-react';
 import { supabaseAdmin } from '@/lib/supabase';
+import Link from 'next/link';
+import { Bot, Users, CheckSquare, Calendar, Activity, Clock, Zap, ArrowRight } from 'lucide-react';
 
 async function getDashboardStats() {
-  // Get agent stats
   const { data: agents } = await supabaseAdmin.from('agents').select('status');
-  
-  // Get task stats  
   const { data: tasks } = await supabaseAdmin.from('tasks').select('status, completed_at');
-  
-  // Get department stats
   const { data: departments } = await supabaseAdmin.from('departments').select('id');
   
   const today = new Date();
@@ -44,8 +39,15 @@ export default async function Dashboard() {
               <h1 className="text-xl font-bold">Agent Empire OS</h1>
               <span className="text-xs text-slate-500 ml-2">v1.0.0</span>
             </div>
-            <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2 text-slate-400">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/agents/new"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <Bot className="w-4 h-4" />
+                Create Agent
+              </Link>
+              <div className="flex items-center gap-2 text-slate-400 text-sm">
                 <Clock className="w-4 h-4" />
                 <span suppressHydrationWarning>{new Date().toLocaleTimeString()}</span>
               </div>
@@ -97,46 +99,60 @@ export default async function Dashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Link href="/agents">
-            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-blue-500/50 transition-colors cursor-pointer group">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
-                  <Bot className="w-6 h-6 text-blue-400" />
+          <Link href="/agents" className="block">
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-blue-500/50 transition-colors cursor-pointer group h-full">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
+                    <Bot className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Agents</h3>
                 </div>
-                <h3 className="text-lg font-semibold">Agents</h3>
+                <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-blue-400 transition-colors" />
               </div>
               <p className="text-sm text-slate-400">Manage your AI workforce · {stats.totalAgents} active</p>
             </div>
           </Link>
 
-          <Link href="/tasks">
-            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-green-500/50 transition-colors cursor-pointer group">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-green-500/10 rounded-lg group-hover:bg-green-500/20 transition-colors">
-                  <CheckSquare className="w-6 h-6 text-green-400" />
+          <Link href="/tasks" className="block">
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-green-500/50 transition-colors cursor-pointer group h-full">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-500/10 rounded-lg group-hover:bg-green-500/20 transition-colors">
+                    <CheckSquare className="w-6 h-6 text-green-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Tasks</h3>
                 </div>
-                <h3 className="text-lg font-semibold">Tasks</h3>
+                <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-green-400 transition-colors" />
               </div>
               <p className="text-sm text-slate-400">Track and assign work · {stats.pendingTasks} pending</p>
             </div>
           </Link>
 
-          <Link href="/meetings">
-            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-purple-500/50 transition-colors cursor-pointer group">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors">
-                  <Calendar className="w-6 h-6 text-purple-400" />
+          <Link href="/departments" className="block">
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-purple-500/50 transition-colors cursor-pointer group h-full">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors">
+                    <Users className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Departments</h3>
                 </div>
-                <h3 className="text-lg font-semibold">Meetings</h3>
+                <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-purple-400 transition-colors" />
               </div>
-              <p className="text-sm text-slate-400">Schedule and review</p>
+              <p className="text-sm text-slate-400">Organize your teams · {stats.departments} departments</p>
             </div>
           </Link>
         </div>
 
         {/* Recent Activity */}
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Recent Activity</h3>
+            <Link href="/agents" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+              View all →
+            </Link>
+          </div>
           <div className="space-y-3">
             {stats.totalAgents === 0 ? (
               <div className="text-center py-8 text-slate-500">

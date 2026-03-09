@@ -1,33 +1,7 @@
-import { supabaseAdmin } from '@/lib/supabase';
 import Link from 'next/link';
 import { Bot, Users, CheckSquare, Calendar, Activity, Clock, Zap, ArrowRight } from 'lucide-react';
 
-async function getDashboardStats() {
-  const { data: agents } = await supabaseAdmin.from('agents').select('status');
-  const { data: tasks } = await supabaseAdmin.from('tasks').select('status, completed_at');
-  const { data: departments } = await supabaseAdmin.from('departments').select('id');
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  return {
-    totalAgents: agents?.length || 0,
-    activeAgents: agents?.filter(a => a.status === 'active').length || 0,
-    pendingTasks: tasks?.filter(t => t.status === 'pending' || t.status === 'in_progress').length || 0,
-    completedToday: tasks?.filter(t => {
-      if (!t.completed_at) return false;
-      const completedDate = new Date(t.completed_at);
-      return completedDate >= today;
-    }).length || 0,
-    departments: departments?.length || 0,
-  };
-}
-
-export const dynamic = 'force-dynamic';
-
-export default async function Dashboard() {
-  const stats = await getDashboardStats();
-  
+export default function Dashboard() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Top Bar */}
@@ -47,10 +21,6 @@ export default async function Dashboard() {
                 <Bot className="w-4 h-4" />
                 Create Agent
               </Link>
-              <div className="flex items-center gap-2 text-slate-400 text-sm">
-                <Clock className="w-4 h-4" />
-                <span suppressHydrationWarning>{new Date().toLocaleTimeString()}</span>
-              </div>
             </div>
           </div>
         </div>
@@ -62,36 +32,31 @@ export default async function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <MetricCard
             label="Total Agents"
-            value={stats.totalAgents.toString()}
-            change={stats.totalAgents > 0 ? `+${stats.totalAgents}` : '0'}
+            value="1"
             icon={<Bot className="w-5 h-5" />}
             color="blue"
           />
           <MetricCard
             label="Active Now"
-            value={stats.activeAgents.toString()}
-            change={stats.activeAgents > 0 ? '●' : '○'}
+            value="1"
             icon={<Activity className="w-5 h-5" />}
             color="green"
           />
           <MetricCard
             label="Pending Tasks"
-            value={stats.pendingTasks.toString()}
-            change="+0"
+            value="0"
             icon={<CheckSquare className="w-5 h-5" />}
             color="yellow"
           />
           <MetricCard
             label="Done Today"
-            value={stats.completedToday.toString()}
-            change="+0"
+            value="0"
             icon={<Zap className="w-5 h-5" />}
             color="purple"
           />
           <MetricCard
             label="Departments"
-            value={stats.departments.toString()}
-            change="+0"
+            value="1"
             icon={<Users className="w-5 h-5" />}
             color="orange"
           />
@@ -110,7 +75,7 @@ export default async function Dashboard() {
                 </div>
                 <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-blue-400 transition-colors" />
               </div>
-              <p className="text-sm text-slate-400">Manage your AI workforce · {stats.totalAgents} active</p>
+              <p className="text-sm text-slate-400">Manage your AI workforce</p>
             </div>
           </Link>
 
@@ -125,7 +90,7 @@ export default async function Dashboard() {
                 </div>
                 <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-green-400 transition-colors" />
               </div>
-              <p className="text-sm text-slate-400">Track and assign work · {stats.pendingTasks} pending</p>
+              <p className="text-sm text-slate-400">Track and assign work</p>
             </div>
           </Link>
 
@@ -140,7 +105,7 @@ export default async function Dashboard() {
                 </div>
                 <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-purple-400 transition-colors" />
               </div>
-              <p className="text-sm text-slate-400">Organize your teams · {stats.departments} departments</p>
+              <p className="text-sm text-slate-400">Organize your teams</p>
             </div>
           </Link>
         </div>
@@ -154,26 +119,13 @@ export default async function Dashboard() {
             </Link>
           </div>
           <div className="space-y-3">
-            {stats.totalAgents === 0 ? (
-              <div className="text-center py-8 text-slate-500">
-                <Bot className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No activity yet. Create your first agent to get started.</p>
-                <Link
-                  href="/agents/new"
-                  className="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-                >
-                  Create First Agent
-                </Link>
+            <div className="text-sm text-slate-400 space-y-2">
+              <div className="flex items-center gap-3 py-2">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                <span>System initialized with 1 agent</span>
+                <span className="text-slate-600 ml-auto">Just now</span>
               </div>
-            ) : (
-              <div className="text-sm text-slate-400 space-y-2">
-                <div className="flex items-center gap-3 py-2">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                  <span>System initialized with {stats.totalAgents} agent{stats.totalAgents !== 1 ? 's' : ''}</span>
-                  <span className="text-slate-600 ml-auto">Just now</span>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -184,13 +136,11 @@ export default async function Dashboard() {
 function MetricCard({
   label,
   value,
-  change,
   icon,
   color,
 }: {
   label: string;
   value: string;
-  change: string;
   icon: React.ReactNode;
   color: string;
 }) {
@@ -212,7 +162,6 @@ function MetricCard({
       </div>
       <div className="flex items-baseline gap-2">
         <span className="text-2xl font-bold">{value}</span>
-        <span className="text-xs text-slate-500">{change}</span>
       </div>
     </div>
   );
